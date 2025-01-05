@@ -11,7 +11,7 @@ Load the flow.json file into NodeRed in HomeAssistant, the flow is from my 3 Ses
 
 
 
-In Noderedflow:
+In NodeRed flow:
 
 Adjust contents in 'credentials' with your own details
 
