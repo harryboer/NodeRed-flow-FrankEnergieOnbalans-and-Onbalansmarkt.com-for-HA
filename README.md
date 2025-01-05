@@ -10,6 +10,7 @@ Load the flow.json file into NodeRed in HomeAssistant, the flow is from my 3 Ses
 ![Schermafbeelding 2025-01-05 om 13 55 29](https://github.com/user-attachments/assets/d5d01df7-a731-4e9a-a1b8-6183addc0b00)
 
 
+
 In Noderedflow:
 
 Adjust contents in 'credentials' with your own details
@@ -17,6 +18,7 @@ Adjust contents in 'credentials' with your own details
 The 3 blue Nodes that get the data from HomeAssistant ('SoC combined', 'Daily kWh charged' and 'Daily kWh discharged') need to be edited with your sensors from HomeAssistant. These values can't be obtained from FrankEnergy datapull so you can provide them yourself for publishing to Onbalansmarkt.com
 
 Deploy flow, add more debug items as required to see outputs. The result should now be processed and posted to Onbalansmarkt.com 
+
 
 
 To get the data into HomeAssistant:
@@ -30,9 +32,9 @@ In Debug 17 (output from 'Handle SmartBatteryResponse' node) you should see your
 
 ![Schermafbeelding 2025-01-05 om 15 41 26](https://github.com/user-attachments/assets/99c0534a-78f7-4e6a-8283-c928fa346391)
 
-copy from each battery the 'id' field, you need tich if you want to add results into HomeAssistant. This is de id that FrankEnergie gives to every battery.
+copy from each battery the 'id' field, you'll need these if you want to add results into HomeAssistant. This is the unique id that FrankEnergie gives to each battery.
 
-Use them in these in the Switch nodes:
+Use them in the Switch nodes, per battery there is a Period (daily trade results) and a Total (Total trade results) switch node and sensor node:
 
 ![Schermafbeelding 2025-01-05 om 15 43 23](https://github.com/user-attachments/assets/1fcd38df-38dc-4e65-ae5d-208fd0c3030e)
 
@@ -40,6 +42,6 @@ leave the '_period' or '_total' part in the filter!
 
 Edit all the blue HomeAssistant Sensor nodes accordingly, or adjust to however many batteries you have. Edit the 'Entity Config' in properties. 
 
-Per battery there is a Period (daily trade results) and Total (Total trade results) sensor
+
 
 When succesful they should appear as sensors in HomeAssistant
