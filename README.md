@@ -7,7 +7,9 @@ Register on Onbalansmarkt.com and get the API token
 
 Load the NodeRed_Frankonbalansmarkt.json file into NodeRed in HomeAssistant, the flow is from my 3 Sessy batteries, adjust accordingly.
 
-![Schermafbeelding 2025-01-05 om 13 55 29](https://github.com/user-attachments/assets/d5d01df7-a731-4e9a-a1b8-6183addc0b00)
+
+![Schermafbeelding 2025-01-28 om 00 26 02](https://github.com/user-attachments/assets/b7688396-5193-489d-b664-1d29abb87648)
+
 
 
 
@@ -23,9 +25,10 @@ Deploy flow, add more debug items as required to see outputs. The result should 
 
 To get the data into HomeAssistant:
 
-The 6 blue sensor Nodes (or how ever many batteries you have (x2))  that send the Trade data to HomeAssistant need to be edited, and also the Switch nodes feeding into the sensor node:
+The 15 blue sensor Nodes (or how ever many batteries you have (x5))  that send the Trade data to HomeAssistant need to be edited, and also the Switch nodes feeding into the sensor node:
 
-![Schermafbeelding 2025-01-05 om 16 27 39](https://github.com/user-attachments/assets/28ca8992-ace7-4fdb-9b43-36126b56b33b)
+![Schermafbeelding 2025-01-28 om 01 03 54](https://github.com/user-attachments/assets/61814e22-9b91-44f3-b25e-345a422dc875)
+
 
 
 In Debug 17 (output from 'Handle SmartBatteryResponse' node) you should see your batteries:
