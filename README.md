@@ -5,7 +5,7 @@ Furtermore, sensors in HomeAssistant of 1. combined SoC 2.Combined Daily kWh Cha
 Register on Onbalansmarkt.com and get the API token
 
 
-Load the flow.json file into NodeRed in HomeAssistant, the flow is from my 3 Sessy batteries, adjust accordingly.
+Load the NodeRed_Frankonbalansmarkt.json file into NodeRed in HomeAssistant, the flow is from my 3 Sessy batteries, adjust accordingly.
 
 ![Schermafbeelding 2025-01-05 om 13 55 29](https://github.com/user-attachments/assets/d5d01df7-a731-4e9a-a1b8-6183addc0b00)
 
