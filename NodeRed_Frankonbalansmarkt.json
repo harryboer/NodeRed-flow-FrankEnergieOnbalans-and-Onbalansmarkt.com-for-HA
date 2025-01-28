@@ -1,0 +1,2206 @@
+[
+    {
+        "id": "3559df65578a0804",
+        "type": "tab",
+        "label": "FE Combined Sessy's",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "d47b7d59e9584ff2",
+        "type": "inject",
+        "z": "3559df65578a0804",
+        "name": "Every 5 minutes",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "300",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 290,
+        "y": 140,
+        "wires": [
+            [
+                "e935bc9c6b842fce"
+            ]
+        ]
+    },
+    {
+        "id": "d6191469f7c41766",
+        "type": "debug",
+        "z": "3559df65578a0804",
+        "name": "debug 13",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1460,
+        "y": 740,
+        "wires": []
+    },
+    {
+        "id": "dd3e1e9a3386c487",
+        "type": "debug",
+        "z": "3559df65578a0804",
+        "name": "debug 14",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1040,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "dfd6e7d69c1a0713",
+        "type": "function",
+        "z": "3559df65578a0804",
+        "name": "Prepare Login Request",
+        "func": "const credentials = global.get(\"frankCredentials\");\n\nif (!credentials || !credentials.username || !credentials.password) {\n    node.error(\"FrankEnergie credentials are missing.\");\n    return null;\n}\n\n// Prepare login payload\nmsg.payload = {\n    query: `\n        mutation Login($email: String!, $password: String!) {\n            login(email: $email, password: $password) {\n                authToken\n                refreshToken\n            }\n        }\n    `,\n    variables: {\n        email: credentials.username,\n        password: credentials.password\n    },\n    operationName: \"Login\"\n};\n\nmsg.url = \"https://frank-graphql-prod.graphcdn.app/\";\nmsg.method = \"POST\";\nmsg.headers = {\n    \"Content-Type\": \"application/json\"\n};\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 300,
+        "y": 240,
+        "wires": [
+            [
+                "f723ca916416ac55"
+            ]
+        ]
+    },
+    {
+        "id": "2f6e844aad1b8baf",
+        "type": "function",
+        "z": "3559df65578a0804",
+        "name": "Handle Login Response",
+        "func": "// \"Handle Login Response\"\n\nconst data = msg.payload; \n// data.data.login should have {authToken, refreshToken} if successful\n\nif (!data.data || !data.data.login) {\n    node.error(\"Login failed or returned empty data\");\n    return;\n}\n\n// Extract the tokens\nconst authToken = data.data.login.authToken;\nconst refreshToken = data.data.login.refreshToken;\n\n// Store them in flow context for local use\nflow.set(\"frankAuthToken\", authToken);\nflow.set(\"frankRefreshToken\", refreshToken);\n\n// Store the authToken in global context for universal access\nglobal.set(\"authToken\", authToken); // Now accessible globally\n\n// Pass msg along if needed\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 310,
+        "y": 360,
+        "wires": [
+            [
+                "44acf40612f13eb8"
+            ]
+        ]
+    },
+    {
+        "id": "44acf40612f13eb8",
+        "type": "function",
+        "z": "3559df65578a0804",
+        "name": "Prepare getSmartBatteries Request",
+        "func": "// Node-RED Function node: \"Prepare getSmartBatteries Request\"\n\n// Retrieve the stored auth token from flow context\nconst authToken = flow.get(\"frankAuthToken\");\nif (!authToken) {\n    node.error(\"No auth token found. Did you login first?\");\n    return;\n}\n\n// Build the GraphQL query for retrieving smart batteries\nmsg.payload = {\n    query: `\n        query SmartBatteries {\n            smartBatteries {\n                brand\n                capacity\n                createdAt\n                externalReference\n                id\n                maxChargePower\n                maxDischargePower\n                provider\n                updatedAt\n            }\n        }\n    `,\n    operationName: \"SmartBatteries\"\n};\n\n// Prepare the request details for the HTTP Request node\nmsg.url = \"https://frank-graphql-prod.graphcdn.app/\";    // GraphQL endpoint\nmsg.method = \"POST\";\nmsg.headers = {\n    \"Content-Type\": \"application/json\",\n    \"Authorization\": `Bearer ${authToken}`  // Add the token for authorization\n};\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 340,
+        "y": 460,
+        "wires": [
+            [
+                "30287c3243fda4eb"
+            ]
+        ]
+    },
+    {
+        "id": "f723ca916416ac55",
+        "type": "http request",
+        "z": "3559df65578a0804",
+        "name": "Login Request",
+        "method": "use",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 280,
+        "y": 300,
+        "wires": [
+            [
+                "2f6e844aad1b8baf"
+            ]
+        ]
+    },
+    {
+        "id": "30287c3243fda4eb",
+        "type": "http request",
+        "z": "3559df65578a0804",
+        "name": "SmartBatteries request",
+        "method": "use",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 310,
+        "y": 520,
+        "wires": [
+            [
+                "6f617576459dac6b"
+            ]
+        ]
+    },
+    {
+        "id": "6f617576459dac6b",
+        "type": "function",
+        "z": "3559df65578a0804",
+        "name": "Handle SmartBatteries Response",
+        "func": "// Node-RED Function Node: \"Handle SmartBatteries Response\"\n\n// Extract the array of batteries from msg.payload\nconst batteries = msg.payload;\n\nif (!batteries || batteries.length === 0) {\n    node.error(\"No smart batteries found.\");\n    return;\n}\n\n// Log the batteries for debugging\nnode.warn(\"Smart Batteries: \" + JSON.stringify(batteries));\n\n// Pass the array of batteries to the next step\nmsg.payload = batteries;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 340,
+        "y": 580,
+        "wires": [
+            [
+                "64690341156cc04e",
+                "e4dacc5c70f48b93"
+            ]
+        ]
+    },
+    {
+        "id": "e0aae202316ad446",
+        "type": "debug",
+        "z": "3559df65578a0804",
+        "name": "debug 15",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1460,
+        "y": 800,
+        "wires": []
+    },
+    {
+        "id": "677948f14129d5ec",
+        "type": "debug",
+        "z": "3559df65578a0804",
+        "name": "debug 16",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1460,
+        "y": 660,
+        "wires": []
+    },
+    {
+        "id": "96e529a961229668",
+        "type": "function",
+        "z": "3559df65578a0804",
+        "name": "Prepare Get SmartBatterySessions Request",
+        "func": "// Assuming the authentication token is stored in the global context\nconst authToken = global.get(\"authToken\");\n\n// Check if the token exists\nif (!authToken) {\n    node.error(\"Authentication token is missing. Ensure the login flow has been executed.\");\n    return;\n}\n\n// Set the request details\nmsg.url = \"https://frank-graphql-prod.graphcdn.app/\";\nmsg.method = \"POST\";\nmsg.headers = {\n    \"Content-Type\": \"application/json\",\n    \"Authorization\": `Bearer ${authToken}`\n};\n\n// Define the time range for the session query\nconst timeZone = \"Europe/Amsterdam\";\nconst formatDate = (date) =>\n    new Date(date.toLocaleString(\"en-US\", { timeZone })).toISOString().split(\"T\")[0];\n\nconst startDate = formatDate(new Date());\nconst endDate = formatDate(new Date());\n\n// Build the GraphQL query\nmsg.payload = {\n    query: `\n        query SmartBatterySessions($startDate: String!, $endDate: String!, $deviceId: String!) {\n            smartBatterySessions(\n                startDate: $startDate\n                endDate: $endDate\n                deviceId: $deviceId\n            ) {\n                deviceId\n                periodEndDate\n                periodStartDate\n                periodTradingResult\n                totalTradingResult\n                periodEpexResult\n                periodFrankSlim\n                periodImbalanceResult\n                periodTotalResult\n                periodTradeIndex\n                sessions {\n                    cumulativeResult\n                    date\n                    result\n                    status\n                    tradeIndex\n                }\n            }\n        }\n    `,\n    variables: {\n        deviceId: msg.payload.id, // Extract the deviceId from the split message payload\n        startDate: startDate,\n        endDate: endDate\n    },\n    operationName: \"SmartBatterySessions\"\n};\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 370,
+        "y": 860,
+        "wires": [
+            [
+                "07fe187902ddf5e0",
+                "af537fdd69211eb0"
+            ]
+        ]
+    },
+    {
+        "id": "07fe187902ddf5e0",
+        "type": "http request",
+        "z": "3559df65578a0804",
+        "name": "SmartBatterySession request",
+        "method": "use",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 320,
+        "y": 920,
+        "wires": [
+            [
+                "14e2f33df454e20d",
+                "d8e9da5cedfbbdf8"
+            ]
+        ]
+    },
+    {
+        "id": "14e2f33df454e20d",
+        "type": "function",
+        "z": "3559df65578a0804",
+        "name": "Handle SmartBatterySessions Response",
+        "func": "// Extract response data\nconst data = msg.payload;\n\n// Validate the response structure\nif (!data || !data.data || !data.data.smartBatterySessions) {\n    node.error(\"No valid session data found for the battery.\");\n    return;\n}\n\n// Extract session data\nconst sessions = data.data.smartBatterySessions;\n\n// Construct the new payload\nmsg.payload = {\n    session: {\n        deviceId: sessions.deviceId,\n        periodStartDate: sessions.periodStartDate,\n        periodEndDate: sessions.periodEndDate,\n        periodTradingResult: sessions.periodTradingResult,\n        totalTradingResult: sessions.totalTradingResult,\n        periodEpexResult: sessions.periodEpexResult,\n        periodFrankSlim: sessions.periodFrankSlim,\n        periodImbalanceResult: sessions.periodImbalanceResult\n\n    }\n};\n\n// Use deviceId as the topic for tracking individual batteries\nmsg.topic = `session_${msg.payload.session.deviceId}`;\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 360,
+        "y": 980,
+        "wires": [
+            [
+                "2f7eac381729bf3a",
+                "8bdf3e80910a544c"
+            ]
+        ]
+    },
+    {
+        "id": "64690341156cc04e",
+        "type": "function",
+        "z": "3559df65578a0804",
+        "name": "SmartBatteries array",
+        "func": "// Extract smartBatteries array\nmsg.payload = msg.payload.data.smartBatteries;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 300,
+        "y": 660,
+        "wires": [
+            [
+                "e916c0f0bbe3fd66",
+                "99d999e2aa2ba016"
+            ]
+        ]
+    },
+    {
+        "id": "2f7eac381729bf3a",
+        "type": "join",
+        "z": "3559df65578a0804",
+        "name": "Join Battery result and HA values",
+        "mode": "custom",
+        "build": "object",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "useparts": false,
+        "accumulate": false,
+        "timeout": "5",
+        "count": "",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 1180,
+        "y": 660,
+        "wires": [
+            [
+                "677948f14129d5ec",
+                "8b709926489c3b0e",
+                "17f7a853a9ed2d5e"
+            ]
+        ]
+    },
+    {
+        "id": "e4dacc5c70f48b93",
+        "type": "debug",
+        "z": "3559df65578a0804",
+        "name": "debug 17",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 640,
+        "y": 580,
+        "wires": []
+    },
+    {
+        "id": "8b709926489c3b0e",
+        "type": "function",
+        "z": "3559df65578a0804",
+        "name": "Prepare for Onbalansmarkt.com",
+        "func": "// Ensure HA values are present in the message payload\nconst { overallSoC, kWhCharged, kWhDischarged, selfConsumption} = msg.payload;\nconst timeZone = \"Europe/Amsterdam\";\nconst localTimestamp = new Date().toLocaleString(\"en-US\", { timeZone });\nconst isoTimestamp = new Date(localTimestamp).toISOString();\n\nif (overallSoC === undefined || kWhCharged === undefined || kWhDischarged === undefined || selfConsumption === undefined) {\n    node.error(\"Missing required HA values: overallSoC, kWhCharged, kWhDischarged or selfConsumption.\");\n    return null;\n}\n\n// Aggregate the total trading results\n\nconst totalTradingResult = Object.values(msg.payload)\n    .filter(key => key.session && key.session.totalTradingResult !== undefined)\n    .reduce((sum, key) => sum + key.session.totalTradingResult, 0);\n\nconst periodTradingResult = Object.values(msg.payload)\n    .filter(key => key.session && key.session.periodTradingResult !== undefined)\n    .reduce((sum, key) => sum + key.session.periodTradingResult, 0);\n\n// Prepare the payload for Onbalansmarkt.com\nconst payload = {\n    timestamp: isoTimestamp,\n    batteryResult: periodTradingResult.toFixed(2), // Ensure two decimal places as a string\n    batteryResultTotal: totalTradingResult.toFixed(2), // Ensure two decimal places as a string\n    batteryCharge: Math.round(overallSoC), // Convert SoC to an integer\n    batteryPower: null, \n    chargedToday: Math.round(kWhCharged).toString(), // String format\n    dischargedToday: Math.round(kWhDischarged).toString(), // String format\n    loadBalancingActive: null,\n    solarResult: null, \n    chargerResult: null, \n    selfConsumptionMode: selfConsumption \n};\n\n// Set headers for the HTTP request\nconst apiKey = global.get(\"onbalansmarktApiKey\");\nif (!apiKey) {\n    node.error(\"Onbalansmarkt API key is missing.\");\n    return null;\n}\n\nmsg.headers = {\n    \"Content-Type\": \"application/json\",\n    \"Authorization\": `Bearer ${apiKey}`\n};\n\n// Set the payload and URL for the HTTP request\nmsg.payload = payload;\nmsg.url = \"https://onbalansmarkt.com/api/live\";\nmsg.method = \"POST\";\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1170,
+        "y": 740,
+        "wires": [
+            [
+                "d6191469f7c41766",
+                "5fc854e55f37549b"
+            ]
+        ]
+    },
+    {
+        "id": "5fc854e55f37549b",
+        "type": "http request",
+        "z": "3559df65578a0804",
+        "name": "Send data to Onbalansmarkt.com",
+        "method": "use",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 1180,
+        "y": 800,
+        "wires": [
+            [
+                "e0aae202316ad446"
+            ]
+        ]
+    },
+    {
+        "id": "6db0648e4c259e81",
+        "type": "ha-get-entities",
+        "z": "3559df65578a0804",
+        "name": "SoC Combined",
+        "server": "1fb80db3.b43d62",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "is",
+                "value": "sensor.sessy_laadstatus",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "array",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 740,
+        "y": 140,
+        "wires": [
+            [
+                "4290d62b618b8eba"
+            ]
+        ]
+    },
+    {
+        "id": "4561c594f47ca716",
+        "type": "ha-get-entities",
+        "z": "3559df65578a0804",
+        "name": "Daily kWh Charged",
+        "server": "1fb80db3.b43d62",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "is",
+                "value": "sensor.sessy_charged_kwh_per_dag",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "array",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 750,
+        "y": 280,
+        "wires": [
+            [
+                "d40d8cf234d2d574"
+            ]
+        ]
+    },
+    {
+        "id": "6a84af241e92a4e9",
+        "type": "ha-get-entities",
+        "z": "3559df65578a0804",
+        "name": "Daily kWh Discharged",
+        "server": "1fb80db3.b43d62",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "is",
+                "value": "sensor.sessy_discharged_kwh_per_dag",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "array",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 760,
+        "y": 420,
+        "wires": [
+            [
+                "30a3bf5e266ee821"
+            ]
+        ]
+    },
+    {
+        "id": "8bdf3e80910a544c",
+        "type": "debug",
+        "z": "3559df65578a0804",
+        "name": "debug 18",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 640,
+        "y": 980,
+        "wires": []
+    },
+    {
+        "id": "d8e9da5cedfbbdf8",
+        "type": "debug",
+        "z": "3559df65578a0804",
+        "name": "debug 19",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 640,
+        "y": 920,
+        "wires": []
+    },
+    {
+        "id": "af537fdd69211eb0",
+        "type": "debug",
+        "z": "3559df65578a0804",
+        "name": "debug 20",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 640,
+        "y": 860,
+        "wires": []
+    },
+    {
+        "id": "d40d8cf234d2d574",
+        "type": "function",
+        "z": "3559df65578a0804",
+        "name": "kWh Charged extract",
+        "func": "if (msg.payload && msg.payload[0] && msg.payload[0].state) {\n    msg.payload = parseFloat(msg.payload[0].state); // Convert charged kWh value to a number\n} else {\n    node.error(\"No valid Charged kWh data found.\");\n    return null;\n}\n\nmsg.topic = \"kWhCharged\";\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 760,
+        "y": 340,
+        "wires": [
+            [
+                "2f7eac381729bf3a",
+                "01aa9b43b3575a2f"
+            ]
+        ]
+    },
+    {
+        "id": "30a3bf5e266ee821",
+        "type": "function",
+        "z": "3559df65578a0804",
+        "name": "kWh Discharged extract",
+        "func": "if (msg.payload && msg.payload[0] && msg.payload[0].state) {\n    msg.payload = parseFloat(msg.payload[0].state); // Convert discharged kWh value to a number\n} else {\n    node.error(\"No valid Discharged kWh data found.\");\n    return null;\n}\n\nmsg.topic = \"kWhDischarged\";\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 770,
+        "y": 480,
+        "wires": [
+            [
+                "2f7eac381729bf3a",
+                "d525741161c1b2c2"
+            ]
+        ]
+    },
+    {
+        "id": "01aa9b43b3575a2f",
+        "type": "debug",
+        "z": "3559df65578a0804",
+        "name": "debug 21",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1040,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "d525741161c1b2c2",
+        "type": "debug",
+        "z": "3559df65578a0804",
+        "name": "debug 22",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1020,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "4290d62b618b8eba",
+        "type": "function",
+        "z": "3559df65578a0804",
+        "name": "SoC extract",
+        "func": "if (msg.payload && msg.payload[0] && msg.payload[0].state) {\n    msg.payload = parseFloat(msg.payload[0].state); // Convert SoC value to a number\n} else {\n    node.error(\"No valid SoC data found.\");\n    return null;\n}\n\nmsg.topic = \"overallSoC\";\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 730,
+        "y": 200,
+        "wires": [
+            [
+                "dd3e1e9a3386c487",
+                "2f7eac381729bf3a"
+            ]
+        ]
+    },
+    {
+        "id": "e935bc9c6b842fce",
+        "type": "function",
+        "z": "3559df65578a0804",
+        "name": "Credentials",
+        "func": "// Store the credentials in global context\nglobal.set(\"frankCredentials\", {\n    username: \"NAME@EMAIL.COM\",\n    password: \"PASSWORD\"\n});\n\nglobal.set(\"onbalansmarktApiKey\", \"API-KEY\");\n\n// Log for debugging purposes\nnode.warn(\"Credentials have been set in global context.\");\n\n// Pass the message along for future use, if necessary\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 510,
+        "y": 140,
+        "wires": [
+            [
+                "dfd6e7d69c1a0713",
+                "6db0648e4c259e81",
+                "4561c594f47ca716",
+                "6a84af241e92a4e9",
+                "6785bfeee535b17e"
+            ]
+        ]
+    },
+    {
+        "id": "e916c0f0bbe3fd66",
+        "type": "debug",
+        "z": "3559df65578a0804",
+        "name": "debug 23",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 640,
+        "y": 660,
+        "wires": []
+    },
+    {
+        "id": "99d999e2aa2ba016",
+        "type": "split",
+        "z": "3559df65578a0804",
+        "name": "Split Batteries",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "property": "payload",
+        "x": 280,
+        "y": 740,
+        "wires": [
+            [
+                "96e529a961229668",
+                "84ebf55d8a2ff152"
+            ]
+        ]
+    },
+    {
+        "id": "84ebf55d8a2ff152",
+        "type": "debug",
+        "z": "3559df65578a0804",
+        "name": "debug 24",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 640,
+        "y": 740,
+        "wires": []
+    },
+    {
+        "id": "17f7a853a9ed2d5e",
+        "type": "function",
+        "z": "3559df65578a0804",
+        "name": "Extract Sessy Trade Results",
+        "func": "// Iterate over each session and create a separate entity for each value\nconst results = [];\nfor (const [key, session] of Object.entries(msg.payload)) {\n    if (session.session) {\n        // Period Trading Result Entity\n        results.push({\n            payload: {\n                entity_id: `sensor.${key}_period_trading_result`,\n                state: parseFloat(session.session.periodTradingResult).toFixed(2),\n            },\n        });\n\n        // Total Trading Result Entity\n        results.push({\n            payload: {\n                entity_id: `sensor.${key}_total_trading_result`,\n                state: parseFloat(session.session.totalTradingResult).toFixed(2),\n            },\n        });\n\n        // Period Epex Result Entity\n        if (session.session.periodEpexResult !== undefined) {\n            results.push({\n                payload: {\n                    entity_id: `sensor.${key}_period_epex_result`,\n                    state: parseFloat(session.session.periodEpexResult).toFixed(2),\n                },\n            });\n        }\n\n        // Period Frank Slim Entity\n        if (session.session.periodFrankSlim !== undefined) {\n            results.push({\n                payload: {\n                    entity_id: `sensor.${key}_period_frank_slim`,\n                    state: parseFloat(session.session.periodFrankSlim).toFixed(2),\n                },\n            });\n        }\n\n        // Period Imbalance Result Entity\n        if (session.session.periodImbalanceResult !== undefined) {\n            results.push({\n                payload: {\n                    entity_id: `sensor.${key}_period_imbalance_result`,\n                    state: parseFloat(session.session.periodImbalanceResult).toFixed(2),\n                },\n            });\n        }\n    }\n}\n\n// Return the list of messages for separate processing\nreturn [results];\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1120,
+        "y": 340,
+        "wires": [
+            [
+                "4f3fe2d5b46839cf",
+                "01f5c3376481f0a7",
+                "8a5d8b778c930d9e",
+                "bff96293b99b2cea",
+                "3468de49b650bf99",
+                "8a9354df8fe740c9",
+                "45dde45c91b969e4",
+                "7aed2c6a4480ce48",
+                "39b730f04649efd5",
+                "cfd645059280a149",
+                "a5929d0638fe9358",
+                "3ad6f2b6437186b0",
+                "eaf5849e5d0f415c",
+                "b623d0073aa10314",
+                "b315be7d03b71d91",
+                "fc8ce3b6de325d4d"
+            ]
+        ]
+    },
+    {
+        "id": "d8b056fd268c5f70",
+        "type": "ha-sensor",
+        "z": "3559df65578a0804",
+        "name": "Sessy 1 Trade Results Today",
+        "entityConfig": "acf9b707b9ba4b55",
+        "version": 0,
+        "state": "payload.state",
+        "stateType": "msg",
+        "attributes": [
+            {
+                "property": "totalTradingResult",
+                "value": "payload.attributes",
+                "valueType": "msg"
+            }
+        ],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 2060,
+        "y": 60,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "4f3fe2d5b46839cf",
+        "type": "debug",
+        "z": "3559df65578a0804",
+        "name": "debug 25",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1720,
+        "y": 1000,
+        "wires": []
+    },
+    {
+        "id": "01f5c3376481f0a7",
+        "type": "switch",
+        "z": "3559df65578a0804",
+        "name": "Sessy1TradingToday",
+        "property": "payload.entity_id",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": "YOUR_FE_BATTERY_ID_period_trading",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1760,
+        "y": 60,
+        "wires": [
+            [
+                "d8b056fd268c5f70"
+            ]
+        ]
+    },
+    {
+        "id": "6beaf5299b00bc85",
+        "type": "ha-sensor",
+        "z": "3559df65578a0804",
+        "name": "Sessy 2 Trade Results Today",
+        "entityConfig": "aa08aeca7fd4101b",
+        "version": 0,
+        "state": "payload.state",
+        "stateType": "msg",
+        "attributes": [
+            {
+                "property": "totalTradingResult",
+                "value": "payload.attributes",
+                "valueType": "msg"
+            }
+        ],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 2060,
+        "y": 380,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "0f153a562baf4406",
+        "type": "ha-sensor",
+        "z": "3559df65578a0804",
+        "name": "Sessy 3 Trade Results Today",
+        "entityConfig": "7335fb5a46410086",
+        "version": 0,
+        "state": "payload.state",
+        "stateType": "msg",
+        "attributes": [
+            {
+                "property": "totalTradingResult",
+                "value": "payload.attributes",
+                "valueType": "msg"
+            }
+        ],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 2060,
+        "y": 700,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "8a5d8b778c930d9e",
+        "type": "switch",
+        "z": "3559df65578a0804",
+        "name": "Sessy1TotalTrading",
+        "property": "payload.entity_id",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": "YOUR_FE_BATTERY_ID_total",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1750,
+        "y": 120,
+        "wires": [
+            [
+                "f52e1c52598e9086"
+            ]
+        ]
+    },
+    {
+        "id": "f52e1c52598e9086",
+        "type": "ha-sensor",
+        "z": "3559df65578a0804",
+        "name": "Sessy 1 Total Trade Results",
+        "entityConfig": "a1b9a7bfd1b7077c",
+        "version": 0,
+        "state": "payload.state",
+        "stateType": "msg",
+        "attributes": [
+            {
+                "property": "totalTradingResult",
+                "value": "payload.attributes",
+                "valueType": "msg"
+            }
+        ],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 2060,
+        "y": 120,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "bff96293b99b2cea",
+        "type": "switch",
+        "z": "3559df65578a0804",
+        "name": "Sessy2TradingToday",
+        "property": "payload.entity_id",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": "YOUR_FE_BATTERY_ID_period_trading",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1760,
+        "y": 380,
+        "wires": [
+            [
+                "6beaf5299b00bc85"
+            ]
+        ]
+    },
+    {
+        "id": "8a9354df8fe740c9",
+        "type": "switch",
+        "z": "3559df65578a0804",
+        "name": "Sessy3TradingToday",
+        "property": "payload.entity_id",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": "YOUR_FE_BATTERY_ID_period_trading",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1760,
+        "y": 700,
+        "wires": [
+            [
+                "0f153a562baf4406"
+            ]
+        ]
+    },
+    {
+        "id": "3468de49b650bf99",
+        "type": "switch",
+        "z": "3559df65578a0804",
+        "name": "Sessy2TotalTrading",
+        "property": "payload.entity_id",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": "YOUR_FE_BATTERY_ID_total",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1750,
+        "y": 440,
+        "wires": [
+            [
+                "64dbf9643842892a"
+            ]
+        ]
+    },
+    {
+        "id": "45dde45c91b969e4",
+        "type": "switch",
+        "z": "3559df65578a0804",
+        "name": "Sessy3TotalTrading",
+        "property": "payload.entity_id",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": "YOUR_FE_BATTERY_ID_total",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1750,
+        "y": 760,
+        "wires": [
+            [
+                "1f016c730dbc44bd"
+            ]
+        ]
+    },
+    {
+        "id": "64dbf9643842892a",
+        "type": "ha-sensor",
+        "z": "3559df65578a0804",
+        "name": "Sessy 2 Total Trade Results",
+        "entityConfig": "ee2eb0e5b08b5f82",
+        "version": 0,
+        "state": "payload.state",
+        "stateType": "msg",
+        "attributes": [
+            {
+                "property": "totalTradingResult",
+                "value": "payload.attributes",
+                "valueType": "msg"
+            }
+        ],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 2060,
+        "y": 440,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "1f016c730dbc44bd",
+        "type": "ha-sensor",
+        "z": "3559df65578a0804",
+        "name": "Sessy 3 Total Trade Results",
+        "entityConfig": "f1f0ce0ccdb9383c",
+        "version": 0,
+        "state": "payload.state",
+        "stateType": "msg",
+        "attributes": [
+            {
+                "property": "totalTradingResult",
+                "value": "payload.attributes",
+                "valueType": "msg"
+            }
+        ],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 2060,
+        "y": 760,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "6785bfeee535b17e",
+        "type": "ha-get-entities",
+        "z": "3559df65578a0804",
+        "name": "Zelfconsumptie Plus",
+        "server": "1fb80db3.b43d62",
+        "version": 1,
+        "rules": [
+            {
+                "condition": "state_object",
+                "property": "entity_id",
+                "logic": "is",
+                "value": "input_boolean.frank_energie_zelfconsumptie_plus",
+                "valueType": "str"
+            }
+        ],
+        "outputType": "array",
+        "outputEmptyResults": false,
+        "outputLocationType": "msg",
+        "outputLocation": "payload",
+        "outputResultsCount": 1,
+        "x": 760,
+        "y": 40,
+        "wires": [
+            [
+                "fc6ab7e0a53151ad"
+            ]
+        ]
+    },
+    {
+        "id": "f2fa93a8f74599af",
+        "type": "debug",
+        "z": "3559df65578a0804",
+        "name": "debug 3",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1040,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "fc6ab7e0a53151ad",
+        "type": "function",
+        "z": "3559df65578a0804",
+        "name": "Zelfconsumptie extract",
+        "func": "if (msg.payload && msg.payload[0] && msg.payload[0].state) {\n    const state = msg.payload[0].state.toLowerCase(); // Get the state and normalize it\n    if (state === \"on\" || state === \"true\") {\n        msg.payload = \"on\"; // Map to \"on\" for Onbalansmarkt\n    } else if (state === \"off\" || state === \"false\") {\n        msg.payload = \"off\"; // Map to \"off\" for Onbalansmarkt\n    } else {\n        node.error(\"Invalid Zelfconsumptie state: \" + state);\n        return null;\n    }\n} else {\n    node.error(\"No valid Zelfconsumptie data found.\");\n    return null;\n}\n\nmsg.topic = \"selfConsumption\";\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 770,
+        "y": 100,
+        "wires": [
+            [
+                "f2fa93a8f74599af",
+                "2f7eac381729bf3a"
+            ]
+        ]
+    },
+    {
+        "id": "7aed2c6a4480ce48",
+        "type": "switch",
+        "z": "3559df65578a0804",
+        "name": "Sessy1PeriodEPEX",
+        "property": "payload.entity_id",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": "YOUR_FE_BATTERY_ID_period_epex",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1750,
+        "y": 180,
+        "wires": [
+            [
+                "2797bcc00231d6b2"
+            ]
+        ]
+    },
+    {
+        "id": "39b730f04649efd5",
+        "type": "switch",
+        "z": "3559df65578a0804",
+        "name": "Sessy1PeriodFrankSlim",
+        "property": "payload.entity_id",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": "YOUR_FE_BATTERY_ID_period_frank_slim",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1770,
+        "y": 240,
+        "wires": [
+            [
+                "5b7d9f9fd7770d60"
+            ]
+        ]
+    },
+    {
+        "id": "cfd645059280a149",
+        "type": "switch",
+        "z": "3559df65578a0804",
+        "name": "Sessy1PeriodImbalance",
+        "property": "payload.entity_id",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": "YOUR_FE_BATTERY_ID_period_imbalance",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1770,
+        "y": 300,
+        "wires": [
+            [
+                "ed6b2fbd4a7a0a1e"
+            ]
+        ]
+    },
+    {
+        "id": "2797bcc00231d6b2",
+        "type": "ha-sensor",
+        "z": "3559df65578a0804",
+        "name": "Sessy 1 EPEX correction",
+        "entityConfig": "55cb082b5a45df03",
+        "version": 0,
+        "state": "payload.state",
+        "stateType": "msg",
+        "attributes": [
+            {
+                "property": "totalTradingResult",
+                "value": "payload.attributes",
+                "valueType": "msg"
+            }
+        ],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 2050,
+        "y": 180,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "5b7d9f9fd7770d60",
+        "type": "ha-sensor",
+        "z": "3559df65578a0804",
+        "name": "Sessy 1 Frank Slim",
+        "entityConfig": "840f6e4b27cb70f7",
+        "version": 0,
+        "state": "payload.state",
+        "stateType": "msg",
+        "attributes": [
+            {
+                "property": "totalTradingResult",
+                "value": "payload.attributes",
+                "valueType": "msg"
+            }
+        ],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 2030,
+        "y": 240,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "ed6b2fbd4a7a0a1e",
+        "type": "ha-sensor",
+        "z": "3559df65578a0804",
+        "name": "Sessy 1 Imbalance",
+        "entityConfig": "2e694aefd348d29a",
+        "version": 0,
+        "state": "payload.state",
+        "stateType": "msg",
+        "attributes": [
+            {
+                "property": "totalTradingResult",
+                "value": "payload.attributes",
+                "valueType": "msg"
+            }
+        ],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 2030,
+        "y": 300,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "a5929d0638fe9358",
+        "type": "switch",
+        "z": "3559df65578a0804",
+        "name": "Sessy2PeriodEPEX",
+        "property": "payload.entity_id",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": "YOUR_FE_BATTERY_ID_period_epex",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1750,
+        "y": 500,
+        "wires": [
+            [
+                "cdf0ce3ef157255c"
+            ]
+        ]
+    },
+    {
+        "id": "3ad6f2b6437186b0",
+        "type": "switch",
+        "z": "3559df65578a0804",
+        "name": "Sessy2PeriodFrankSlim",
+        "property": "payload.entity_id",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": "YOUR_FE_BATTERY_ID_period_frank_slim",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1770,
+        "y": 560,
+        "wires": [
+            [
+                "1b6832c5225861e5"
+            ]
+        ]
+    },
+    {
+        "id": "eaf5849e5d0f415c",
+        "type": "switch",
+        "z": "3559df65578a0804",
+        "name": "Sessy2PeriodImbalance",
+        "property": "payload.entity_id",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": "YOUR_FE_BATTERY_ID_period_imbalance",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1770,
+        "y": 620,
+        "wires": [
+            [
+                "0e344b3ab494a346"
+            ]
+        ]
+    },
+    {
+        "id": "cdf0ce3ef157255c",
+        "type": "ha-sensor",
+        "z": "3559df65578a0804",
+        "name": "Sessy 2 EPEX correction",
+        "entityConfig": "299eb494b7238a36",
+        "version": 0,
+        "state": "payload.state",
+        "stateType": "msg",
+        "attributes": [
+            {
+                "property": "totalTradingResult",
+                "value": "payload.attributes",
+                "valueType": "msg"
+            }
+        ],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 2050,
+        "y": 500,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "1b6832c5225861e5",
+        "type": "ha-sensor",
+        "z": "3559df65578a0804",
+        "name": "Sessy 2 Frank Slim",
+        "entityConfig": "8a4d10ddad4cc078",
+        "version": 0,
+        "state": "payload.state",
+        "stateType": "msg",
+        "attributes": [
+            {
+                "property": "totalTradingResult",
+                "value": "payload.attributes",
+                "valueType": "msg"
+            }
+        ],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 2030,
+        "y": 560,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "0e344b3ab494a346",
+        "type": "ha-sensor",
+        "z": "3559df65578a0804",
+        "name": "Sessy 2 Imbalance",
+        "entityConfig": "c69b14662f3b0e07",
+        "version": 0,
+        "state": "payload.state",
+        "stateType": "msg",
+        "attributes": [
+            {
+                "property": "totalTradingResult",
+                "value": "payload.attributes",
+                "valueType": "msg"
+            }
+        ],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 2030,
+        "y": 620,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "b623d0073aa10314",
+        "type": "switch",
+        "z": "3559df65578a0804",
+        "name": "Sessy3PeriodEPEX",
+        "property": "payload.entity_id",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": "YOUR_FE_BATTERY_ID_period_epex",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1750,
+        "y": 820,
+        "wires": [
+            [
+                "59311d2b828c680e"
+            ]
+        ]
+    },
+    {
+        "id": "b315be7d03b71d91",
+        "type": "switch",
+        "z": "3559df65578a0804",
+        "name": "Sessy3PeriodFrankSlim",
+        "property": "payload.entity_id",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": "YOUR_FE_BATTERY_ID_period_frank_slim",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1770,
+        "y": 880,
+        "wires": [
+            [
+                "45f06d7c640f4072"
+            ]
+        ]
+    },
+    {
+        "id": "fc8ce3b6de325d4d",
+        "type": "switch",
+        "z": "3559df65578a0804",
+        "name": "Sessy3PeriodImbalance",
+        "property": "payload.entity_id",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "cont",
+                "v": "YOUR_FE_BATTERY_ID_period_imbalance",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1770,
+        "y": 940,
+        "wires": [
+            [
+                "ecca1509ce62a1c2"
+            ]
+        ]
+    },
+    {
+        "id": "59311d2b828c680e",
+        "type": "ha-sensor",
+        "z": "3559df65578a0804",
+        "name": "Sessy 3 EPEX correction",
+        "entityConfig": "6067afdb4abbcb3a",
+        "version": 0,
+        "state": "payload.state",
+        "stateType": "msg",
+        "attributes": [
+            {
+                "property": "totalTradingResult",
+                "value": "payload.attributes",
+                "valueType": "msg"
+            }
+        ],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 2050,
+        "y": 820,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "45f06d7c640f4072",
+        "type": "ha-sensor",
+        "z": "3559df65578a0804",
+        "name": "Sessy 3 Frank Slim",
+        "entityConfig": "d34df931d9bf58ab",
+        "version": 0,
+        "state": "payload.state",
+        "stateType": "msg",
+        "attributes": [
+            {
+                "property": "totalTradingResult",
+                "value": "payload.attributes",
+                "valueType": "msg"
+            }
+        ],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 2030,
+        "y": 880,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "ecca1509ce62a1c2",
+        "type": "ha-sensor",
+        "z": "3559df65578a0804",
+        "name": "Sessy 3 Imbalance",
+        "entityConfig": "22e8774d0d15f64b",
+        "version": 0,
+        "state": "payload.state",
+        "stateType": "msg",
+        "attributes": [
+            {
+                "property": "totalTradingResult",
+                "value": "payload.attributes",
+                "valueType": "msg"
+            }
+        ],
+        "inputOverride": "allow",
+        "outputProperties": [],
+        "x": 2030,
+        "y": 940,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "1fb80db3.b43d62",
+        "type": "server",
+        "name": "Home Assistant",
+        "addon": true
+    },
+    {
+        "id": "acf9b707b9ba4b55",
+        "type": "ha-entity-config",
+        "server": "1fb80db3.b43d62",
+        "deviceConfig": "",
+        "name": "Sessy1TradingResultsToday",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Sessy 1 Trading Results Today"
+            },
+            {
+                "property": "icon",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": ""
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": true
+    },
+    {
+        "id": "aa08aeca7fd4101b",
+        "type": "ha-entity-config",
+        "server": "1fb80db3.b43d62",
+        "deviceConfig": "",
+        "name": "Sessy2TradingResultsToday",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Sessy 2 Trading Results Today "
+            },
+            {
+                "property": "icon",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": ""
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": true
+    },
+    {
+        "id": "7335fb5a46410086",
+        "type": "ha-entity-config",
+        "server": "1fb80db3.b43d62",
+        "deviceConfig": "",
+        "name": "Sessy3TradingResults ",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Sessy 3 Trading Results Today"
+            },
+            {
+                "property": "icon",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": ""
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": true
+    },
+    {
+        "id": "a1b9a7bfd1b7077c",
+        "type": "ha-entity-config",
+        "server": "1fb80db3.b43d62",
+        "deviceConfig": "",
+        "name": "Sessy1TotalTradingResults",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Sessy 1 Total Trading Results"
+            },
+            {
+                "property": "icon",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": ""
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "ee2eb0e5b08b5f82",
+        "type": "ha-entity-config",
+        "server": "1fb80db3.b43d62",
+        "deviceConfig": "",
+        "name": "Sessy2TotalTradingResults",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Sessy 2 Total Trading Results"
+            },
+            {
+                "property": "icon",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": ""
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "f1f0ce0ccdb9383c",
+        "type": "ha-entity-config",
+        "server": "1fb80db3.b43d62",
+        "deviceConfig": "",
+        "name": "Sessy3TotalTrading",
+        "version": "6",
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Sessy 3 Total Trading"
+            },
+            {
+                "property": "icon",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": ""
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "55cb082b5a45df03",
+        "type": "ha-entity-config",
+        "server": "1fb80db3.b43d62",
+        "deviceConfig": "",
+        "name": "Sessy1PeriodEPEX",
+        "version": 6,
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Sessy1 Period EPEX"
+            },
+            {
+                "property": "icon",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": ""
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "840f6e4b27cb70f7",
+        "type": "ha-entity-config",
+        "server": "1fb80db3.b43d62",
+        "deviceConfig": "",
+        "name": "Sessy1FrankSlim",
+        "version": 6,
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Sessy 1 Frank Slim"
+            },
+            {
+                "property": "icon",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": ""
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "2e694aefd348d29a",
+        "type": "ha-entity-config",
+        "server": "1fb80db3.b43d62",
+        "deviceConfig": "",
+        "name": "Sessy1Imbalance",
+        "version": 6,
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Sessy1 Imbalance"
+            },
+            {
+                "property": "icon",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": ""
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "299eb494b7238a36",
+        "type": "ha-entity-config",
+        "server": "1fb80db3.b43d62",
+        "deviceConfig": "",
+        "name": "Sessy2PeriodEPEX ",
+        "version": 6,
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Sessy 2 Period EPEX"
+            },
+            {
+                "property": "icon",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": ""
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "8a4d10ddad4cc078",
+        "type": "ha-entity-config",
+        "server": "1fb80db3.b43d62",
+        "deviceConfig": "",
+        "name": "Sessy2FrankSlim",
+        "version": 6,
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Sessy 2 Frank Slim"
+            },
+            {
+                "property": "icon",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": ""
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "c69b14662f3b0e07",
+        "type": "ha-entity-config",
+        "server": "1fb80db3.b43d62",
+        "deviceConfig": "",
+        "name": "Sessy2Imbalance",
+        "version": 6,
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Sessy 2 Imbalance"
+            },
+            {
+                "property": "icon",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": ""
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "6067afdb4abbcb3a",
+        "type": "ha-entity-config",
+        "server": "1fb80db3.b43d62",
+        "deviceConfig": "",
+        "name": "Sessy3PeriodEPEX ",
+        "version": 6,
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Sessy 3 Period EPEX"
+            },
+            {
+                "property": "icon",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": ""
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "d34df931d9bf58ab",
+        "type": "ha-entity-config",
+        "server": "1fb80db3.b43d62",
+        "deviceConfig": "",
+        "name": "Sessy3FrankSlim",
+        "version": 6,
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Sessy 3 Frank Slim"
+            },
+            {
+                "property": "icon",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": ""
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    },
+    {
+        "id": "22e8774d0d15f64b",
+        "type": "ha-entity-config",
+        "server": "1fb80db3.b43d62",
+        "deviceConfig": "",
+        "name": "Sessy3Imbalance",
+        "version": 6,
+        "entityType": "sensor",
+        "haConfig": [
+            {
+                "property": "name",
+                "value": "Sessy 3 Imbalance"
+            },
+            {
+                "property": "icon",
+                "value": ""
+            },
+            {
+                "property": "entity_picture",
+                "value": ""
+            },
+            {
+                "property": "entity_category",
+                "value": ""
+            },
+            {
+                "property": "device_class",
+                "value": ""
+            },
+            {
+                "property": "unit_of_measurement",
+                "value": ""
+            },
+            {
+                "property": "state_class",
+                "value": "measurement"
+            }
+        ],
+        "resend": false,
+        "debugEnabled": false
+    }
+]
