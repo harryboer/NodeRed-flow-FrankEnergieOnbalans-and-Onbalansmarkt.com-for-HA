@@ -37,11 +37,16 @@ In Debug 17 (output from 'Handle SmartBatteryResponse' node) you should see your
 
 copy from each battery the 'id' field, you'll need these if you want to add results into HomeAssistant. This is the unique id that FrankEnergie gives to each battery.
 
-Use them in the Switch nodes, per battery there is a Period (daily trade results) and a Total (Total trade results) switch node and sensor node:
+Use them in the Switch nodes, per battery there is a Period Trade (daily trade results), a Total Trade (Lifetime trade results), Period EPEX (daily EPEX correction), PeriodFrankSlim (daily Frank Slim discount) and PeriodImbalance (daily imbalance trade result) switch node followed by a sensor node:
 
 ![Schermafbeelding 2025-01-05 om 15 43 23](https://github.com/user-attachments/assets/1fcd38df-38dc-4e65-ae5d-208fd0c3030e)
 
-leave the '_period' or '_total' part in the filter!
+Make sure to leave these values in the switch nodes: (but add the unique battery ID in front of them) 
+'_period_trading' 
+'_total' 
+'_period_epex'
+'_period_frank_slim'
+'_period_imbalance'
 
 Edit all the blue HomeAssistant Sensor nodes accordingly, or adjust to however many batteries you have. Edit the 'Entity Config' in properties. 
 
