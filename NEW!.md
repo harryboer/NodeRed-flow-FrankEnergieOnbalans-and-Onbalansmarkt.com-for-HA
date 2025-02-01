@@ -1,8 +1,19 @@
-Nodes that are updated are:
 
-- Prepare Get SmartBatterySessions Request
-- Handle SmartBatterySessions Response
-- Extract Sessy Trade Results
+--------------------
+01-02-2025: Nodes that are updated are:
+
+- Prepare Get SmartBatterySessions Request (correcting timestamp and adding periodTotalResult item)
+- Handle SmartBatterySessions Response (processing the new data)
+- Prepare for Onbalansmarkt.com (streamlining payload with new data to publish on Onbalansmarkt)
+
+and then extra blue nodes that send the data 'Period Total Result' (=kortingsfactuur vandaag) to HomeAssistant
+
+--------------------
+29-01-2025: Nodes that are updated are:
+
+- Prepare Get SmartBatterySessions Request (adding new datalabels to retrieve from Frank)
+- Handle SmartBatterySessions Response (processing the new data)
+- Extract Sessy Trade Results (Adding new data for HomeAssistant)
 
 and then all the extra blue nodes that send the data to HomeAssistant, also update the period trading switch node because the filter 'period' is changed to 'period_trading'
 
