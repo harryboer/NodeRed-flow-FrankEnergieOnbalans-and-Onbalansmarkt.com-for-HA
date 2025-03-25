@@ -17,7 +17,17 @@ In NodeRed flow:
 
 Adjust contents in 'credentials' with your own details
 
-The 3 blue Nodes that get the data from HomeAssistant ('SoC combined', 'Daily kWh charged' and 'Daily kWh discharged') need to be edited with your sensors from HomeAssistant. These values can't be obtained from FrankEnergy datapull so you can provide them yourself for publishing to Onbalansmarkt.com
+The 4 blue Nodes that get the data from HomeAssistant ('SoC combined', 'Daily kWh charged', 'Daily kWh discharged' and 'Zelfconsumptie Plus') need to be edited with your sensors from HomeAssistant. These values can't be obtained from FrankEnergy datapull so you can provide them yourself for publishing to Onbalansmarkt.com. For the 'Zelfconsumptie Plus' you can create an Input Boolean and name this 'frank energie zelfconsumptie plus' to manually indicate if your batteries are in 'Zelfconsumptie Plus':
+ ![Schermafbeelding 2025-03-25 om 11 57 01](https://github.com/user-attachments/assets/2064c204-c5f0-46b4-bfef-d77334b57fb7)
+
+If you don't want this then disconnect this nodes and the function node that it feeds into, this way you can easily reconnect in future if required. Also edit the node 'Prepare for Onbalansmarkt.com' and change the line:
+
+     selfConsumptionMode: selfConsumption
+
+to: 
+
+     selfConsumptionMode: null
+
 
 Deploy flow, add more debug items as required to see outputs. The result should now be processed and posted to Onbalansmarkt.com 
 
